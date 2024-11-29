@@ -1,6 +1,7 @@
 import 'package:admin_app/dio/api.dart';
 import 'package:admin_app/model/category_model.dart';
 import 'package:admin_app/view/add_details_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -49,7 +50,14 @@ class _AddedWidgetsListEditUpdateDeleteScreenState extends State<AddedWidgetsLis
           child: Card(
             elevation: 2,
             child: ListTile(
-              leading: const CircleAvatar(),
+              leading: CircleAvatar(
+                child: CachedNetworkImage(
+                  imageUrl: categoryList[index].imageUrl,
+                  placeholder: (context, url) => const CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                  fit: BoxFit.cover,
+                ),
+              ),
               title: Text(categoryList[index].name),
             )
           ),
