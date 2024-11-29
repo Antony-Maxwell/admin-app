@@ -1,14 +1,11 @@
 import 'dart:io';
 
 import 'package:admin_app/dio/api.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
-import 'package:http_parser/http_parser.dart';
 
 class AddDetailsScreen extends StatefulWidget {
   const AddDetailsScreen({super.key, required this.menuName});
@@ -23,65 +20,27 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   File? image;
   bool isUploading = false;
 
-  Future<void> addCategory() async {
-  print("Started");
-  if (image == null || controller.text.trim().isEmpty) {
-    print("Something is empty");
-    return;
-  }
+  Future<void> addCategory(context) async {
 
-  try {
-    print("Preparing form data");
-    String fileName = "${controller.text}${DateTime.now().millisecondsSinceEpoch}";
-    FormData formData = FormData.fromMap({
-      'image': await MultipartFile.fromFile(
-        image!.path,
-        filename: fileName,
-      ),
-      'name': controller.text.trim(),
-    });
-
-    print("File MIME type: ${lookupMimeType(image!.path)}");
-
-    print("FormData content:");
-    formData.fields.forEach((field) {
-      print("${field.key}: ${field.value}");
-    });
-
-    print("FormData files:");
-    formData.files.forEach((file) {
-      print("${file.key}: ${file.value.filename}");
-    });
-
-
-    final response = await Dio().post(
-      Api.addCategoryApi,
-      data: formData,
-    );
-
-    print("Response status code: ${response.statusCode}");
-    print("Response data: ${response.data}");
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      print("Category added successfully");
-      setState(() {
-        isUploading = false;
-      });
-    } else {
-      print("Failed to upload category");
-    }
-  } on DioException catch (e) {
-    print("DioException occurred: ${e.message}");
-    print('Response data: ${e.response?.data}');
     setState(() {
-      isUploading = false;
+      isUploading = true;
     });
-  } catch (e) {
-    print("Unexpected error: $e");
-    setState(() {
-      isUploading = false;
+
+    Map<String, dynamic> toJson() => {
+      'image': image!.path,
+      'name': controller.text
+    };
+
+    await FetchApi().addCategory(context, toJson()).then((response){
+      bool status = response['status'];
+      if(status){
+        setState(() {
+          isUploading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(const  SnackBar(content: Text("Category added successfully")));
+      }
     });
-  }
 }
 
   @override
@@ -97,9 +56,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
         padding: const EdgeInsets.all(10.0),
         child: Column(
           children: [
-            const Text(
-              "Add a Category",
-              style: TextStyle(
+            Text(
+              "Add a ${widget.menuName}",
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17,
               ),
@@ -210,7 +169,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
               setState(() {
                 isUploading = true;
               });
-              await addCategory();
+              await addCategory(context);
             }
           },
           child: Container(
